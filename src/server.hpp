@@ -45,9 +45,9 @@ public:
 
   ~Server() = default;
 
-  /// Construct the server to listen on the specified client TCP address and
-  /// port, to connect to the specified server TCP address and port, and to
-  /// write SQL requests to the specified log file.
+  /// Construct the server to listen on the specified client TCP address and port,
+  /// to connect to the specified server TCP address and port,
+  /// and to write SQL requests to the specified log file.
   explicit Server(const std::string& t_client_address,
       const std::string& t_client_port,
       const std::string& t_server_address,

@@ -26,14 +26,13 @@
 
 #include <array>
 #include <cstddef>
+#include <functional>
 #include <memory>
 
 #include <boost/asio.hpp>
 
 namespace proxy
 {
-class ConnectionManager;
-
 class Connection;
 
 using ConnectionPtr = std::shared_ptr<Connection>;
@@ -50,9 +49,12 @@ public:
 
   ~Connection() = default;
 
+  /// Functor for the actions for the connection stop.
+  using StopTransferFunc = std::function<void(ConnectionPtr t_connection)>;
+
   /// Construct a connection with the given client socket and server endpoint.
   explicit Connection(boost::asio::ip::tcp::socket t_client_socket,
-      ConnectionManager& t_manager);
+      StopTransferFunc&& t_stop_handler_func);
 
   /// Start the first asynchronous operation for the connection.
   void start();
@@ -64,11 +66,11 @@ private:
   /// Socket for the connection from the client.
   boost::asio::ip::tcp::socket m_client_socket;
 
-  /// The manager for this connection.
-  ConnectionManager& m_connection_manager;
+  /// Buffer for the incoming data from the client.
+  std::array<char, 8192> m_client_buffer;
 
-  /// Buffer for incoming data.
-  std::array<char, 8192> m_buffer;
+  /// Set the actions for the connection stop.
+  StopTransferFunc m_stop_transfer_func;
 };  // class connection
 
 }  // namespace proxy

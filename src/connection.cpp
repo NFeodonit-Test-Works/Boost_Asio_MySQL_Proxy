@@ -24,14 +24,15 @@
 #include "connection.hpp"
 
 #include <utility>
+
 #include "connection_manager.hpp"
 
 namespace proxy
 {
-Connection::Connection(
-    boost::asio::ip::tcp::socket t_client_socket, ConnectionManager& t_manager)
+Connection::Connection(boost::asio::ip::tcp::socket t_client_socket,
+    StopTransferFunc&& t_stop_handler_func)
     : m_client_socket(std::move(t_client_socket))
-    , m_connection_manager(t_manager)
+    , m_stop_transfer_func(std::move(t_stop_handler_func))
 {
 }
 

@@ -83,8 +83,13 @@ void Server::do_accept()
     }
 
     if(!l_error) {
-      m_connection_manager.start(std::make_shared<Connection>(
-          std::move(l_client_socket), m_connection_manager));
+      m_connection_manager.start(
+          std::make_shared<Connection>(std::move(l_client_socket),
+
+              // Set the actions for the connection stop.
+              [this](ConnectionPtr l_connection) -> void {
+                m_connection_manager.stop(l_connection);
+              }));
     }
 
     do_accept();
