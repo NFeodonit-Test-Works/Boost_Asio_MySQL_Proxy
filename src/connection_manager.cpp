@@ -23,26 +23,29 @@
 
 #include "connection_manager.hpp"
 
+#include <iostream>
+
 namespace proxy
 {
-ConnectionManager::ConnectionManager() {}
-
-void ConnectionManager::start(ConnectionPtr c)
+void ConnectionManager::start(ConnectionPtr t_connection)
 {
-  m_connections.insert(c);
-  c->start();
+  m_connections.insert(t_connection);
+  t_connection->start();
+  std::cout << "Opened connections: " << m_connections.size() << "\n";
 }
 
-void ConnectionManager::stop(ConnectionPtr c)
+void ConnectionManager::stop(ConnectionPtr t_connection)
 {
-  m_connections.erase(c);
-  c->stop();
+  t_connection->stop();
+  m_connections.erase(t_connection);
+  std::cout << "Opened connections: " << m_connections.size() << "\n";
 }
 
 void ConnectionManager::stop_all()
 {
-  for(auto c : m_connections)
-    c->stop();
+  for(const auto& connecton : m_connections) {
+    connecton->stop();
+  }
   m_connections.clear();
 }
 

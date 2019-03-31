@@ -24,23 +24,35 @@
 #ifndef PROXY_SERVER_HPP
 #define PROXY_SERVER_HPP
 
-#include <boost/asio.hpp>
 #include <string>
+
+#include <boost/asio.hpp>
+
 #include "connection.hpp"
 #include "connection_manager.hpp"
 
 namespace proxy
 {
-/// The top-level class of the HTTP server.
+/// The top-level class of the proxy server for the MySQL connections.
 class Server
 {
 public:
+  Server() = delete;
   Server(const Server&) = delete;
+  Server(Server&&) = delete;
   Server& operator=(const Server&) = delete;
+  Server& operator=(Server&&) = delete;
 
-  /// Construct the server to listen on the specified TCP address and port, and
-  /// serve up files from the given directory.
-  explicit Server(const std::string& address, const std::string& port);
+  ~Server() = default;
+
+  /// Construct the server to listen on the specified client TCP address and
+  /// port, to connect to the specified server TCP address and port, and to
+  /// write SQL requests to the specified log file.
+  explicit Server(const std::string& t_client_address,
+      const std::string& t_client_port,
+      const std::string& t_server_address,
+      const std::string& t_server_port,
+      const std::string& t_log_file_path);
 
   /// Run the server's io_context loop.
   void run();

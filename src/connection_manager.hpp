@@ -36,16 +36,20 @@ class ConnectionManager
 {
 public:
   ConnectionManager(const ConnectionManager&) = delete;
+  ConnectionManager(ConnectionManager&&) = delete;
   ConnectionManager& operator=(const ConnectionManager&) = delete;
+  ConnectionManager& operator=(ConnectionManager&&) = delete;
+
+  ~ConnectionManager() = default;
 
   /// Construct a connection manager.
-  ConnectionManager();
+  explicit ConnectionManager() = default;
 
   /// Add the specified connection to the manager and start it.
-  void start(ConnectionPtr c);
+  void start(ConnectionPtr t_connection);
 
   /// Stop the specified connection.
-  void stop(ConnectionPtr c);
+  void stop(ConnectionPtr t_connection);
 
   /// Stop all connections.
   void stop_all();

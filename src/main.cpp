@@ -21,31 +21,29 @@
  *    along with this program. If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 
-#include <boost/asio.hpp>
 #include <iostream>
 #include <string>
+
 #include "server.hpp"
 
-int main(int argc, char* argv[])
+int main(int t_argc, char* t_argv[])
 {
   try {
     // Check command line arguments.
-    if(argc != 4) {
-      std::cerr << "Usage: http_server <address> <port> <doc_root>\n";
-      std::cerr << "  For IPv4, try:\n";
-      std::cerr << "    receiver 0.0.0.0 80 .\n";
-      std::cerr << "  For IPv6, try:\n";
-      std::cerr << "    receiver 0::0 80 .\n";
+    if(t_argc != 6) {
+      std::cerr << "Usage: boost-asio-mysql-proxy"
+                   " <client ip> <port> <mysql server ip> <port> <log file>\n";
       return 1;
     }
 
     // Initialise the server.
-    proxy::Server s(argv[1], argv[2]);
+    proxy::Server proxy_server(
+        t_argv[1], t_argv[2], t_argv[3], t_argv[4], t_argv[5]);
 
     // Run the server until stopped.
-    s.run();
+    proxy_server.run();
   } catch(std::exception& e) {
-    std::cerr << "exception: " << e.what() << "\n";
+    std::cerr << "Server stopped with exception: " << e.what() << "\n";
   }
 
   return 0;

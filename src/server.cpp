@@ -22,16 +22,21 @@
  ****************************************************************************/
 
 #include "server.hpp"
-#include <signal.h>
+
+#include <csignal>
+#include <cstddef>
 #include <utility>
 
 namespace proxy
 {
-Server::Server(const std::string& address, const std::string& port)
+Server::Server(const std::string& t_client_address,
+    const std::string& t_client_port,
+    const std::string& t_server_address,
+    const std::string& t_server_port,
+    const std::string& t_log_file_path)
     : m_io_context(1)
     , m_signals(m_io_context)
     , m_acceptor(m_io_context)
-    , m_connection_manager()
 {
   // Register to handle the signals that indicate when the server should exit.
   // It is safe to register for the same signal multiple times in a program,
@@ -40,17 +45,19 @@ Server::Server(const std::string& address, const std::string& port)
   m_signals.add(SIGTERM);
 #if defined(SIGQUIT)
   m_signals.add(SIGQUIT);
-#endif  // defined(SIGQUIT)
+#endif  // if defined(SIGQUIT)
 
   do_await_stop();
 
-  // Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
+  // Start listening on the client socket.
   boost::asio::ip::tcp::resolver resolver(m_io_context);
-  boost::asio::ip::tcp::endpoint endpoint =
-      *resolver.resolve(address, port).begin();
-  m_acceptor.open(endpoint.protocol());
+  boost::asio::ip::tcp::endpoint client_ep =
+      *resolver.resolve(t_client_address, t_client_port).begin();
+
+  // Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
+  m_acceptor.open(client_ep.protocol());
   m_acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
-  m_acceptor.bind(endpoint);
+  m_acceptor.bind(client_ep);
   m_acceptor.listen();
 
   do_accept();
@@ -67,17 +74,17 @@ void Server::run()
 
 void Server::do_accept()
 {
-  m_acceptor.async_accept([this](boost::system::error_code ec,
-                              boost::asio::ip::tcp::socket socket) {
+  m_acceptor.async_accept([this](boost::system::error_code l_error,
+                              boost::asio::ip::tcp::socket l_client_socket) {
     // Check whether the server was stopped by a signal before this
     // completion handler had a chance to run.
     if(!m_acceptor.is_open()) {
       return;
     }
 
-    if(!ec) {
+    if(!l_error) {
       m_connection_manager.start(std::make_shared<Connection>(
-          std::move(socket), m_connection_manager));
+          std::move(l_client_socket), m_connection_manager));
     }
 
     do_accept();
@@ -86,13 +93,14 @@ void Server::do_accept()
 
 void Server::do_await_stop()
 {
-  m_signals.async_wait([this](boost::system::error_code /*ec*/, int /*signo*/) {
-    // The server is stopped by cancelling all outstanding asynchronous
-    // operations. Once all operations have finished the io_context::run()
-    // call will exit.
-    m_acceptor.close();
-    m_connection_manager.stop_all();
-  });
+  m_signals.async_wait(
+      [this](boost::system::error_code /*l_error*/, int /*l_signo*/) {
+        // The server is stopped by cancelling all outstanding asynchronous
+        // operations. Once all operations have finished the io_context::run()
+        // call will exit.
+        m_acceptor.close();
+        m_connection_manager.stop_all();
+      });
 }
 
 }  // namespace proxy

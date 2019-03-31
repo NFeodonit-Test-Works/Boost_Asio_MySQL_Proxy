@@ -25,23 +25,34 @@
 #define PROXY_CONNECTION_HPP
 
 #include <array>
-#include <boost/asio.hpp>
+#include <cstddef>
 #include <memory>
+
+#include <boost/asio.hpp>
 
 namespace proxy
 {
 class ConnectionManager;
 
-/// Represents a single connection from a client.
+class Connection;
+
+using ConnectionPtr = std::shared_ptr<Connection>;
+
+/// Represents a single proxy connection between the client and MySQL server.
 class Connection : public std::enable_shared_from_this<Connection>
 {
 public:
+  Connection() = delete;
   Connection(const Connection&) = delete;
+  Connection(Connection&&) = delete;
   Connection& operator=(const Connection&) = delete;
+  Connection& operator=(Connection&&) = delete;
 
-  /// Construct a connection with the given socket.
-  explicit Connection(
-      boost::asio::ip::tcp::socket socket, ConnectionManager& manager);
+  ~Connection() = default;
+
+  /// Construct a connection with the given client socket and server endpoint.
+  explicit Connection(boost::asio::ip::tcp::socket t_client_socket,
+      ConnectionManager& t_manager);
 
   /// Start the first asynchronous operation for the connection.
   void start();
@@ -50,8 +61,8 @@ public:
   void stop();
 
 private:
-  /// Socket for the connection.
-  boost::asio::ip::tcp::socket m_socket;
+  /// Socket for the connection from the client.
+  boost::asio::ip::tcp::socket m_client_socket;
 
   /// The manager for this connection.
   ConnectionManager& m_connection_manager;
@@ -59,8 +70,6 @@ private:
   /// Buffer for incoming data.
   std::array<char, 8192> m_buffer;
 };  // class connection
-
-typedef std::shared_ptr<Connection> ConnectionPtr;
 
 }  // namespace proxy
 

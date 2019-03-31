@@ -29,9 +29,9 @@
 namespace proxy
 {
 Connection::Connection(
-    boost::asio::ip::tcp::socket socket, ConnectionManager& manager)
-    : m_socket(std::move(socket))
-    , m_connection_manager(manager)
+    boost::asio::ip::tcp::socket t_client_socket, ConnectionManager& t_manager)
+    : m_client_socket(std::move(t_client_socket))
+    , m_connection_manager(t_manager)
 {
 }
 
@@ -39,7 +39,7 @@ void Connection::start() {}
 
 void Connection::stop()
 {
-  m_socket.close();
+  m_client_socket.close();
 }
 
 }  // namespace proxy
