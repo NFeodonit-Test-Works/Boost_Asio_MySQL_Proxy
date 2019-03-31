@@ -37,6 +37,7 @@ Server::Server(const std::string& t_client_address,
     : m_io_context(1)
     , m_signals(m_io_context)
     , m_acceptor(m_io_context)
+    , m_packet_logger(t_log_file_path)
 {
   // Register to handle the signals that indicate when the server should exit.
   // It is safe to register for the same signal multiple times in a program,
@@ -93,6 +94,13 @@ void Server::do_accept()
           // Set the actions for the connection stop.
           [this](ConnectionPtr l_connection) -> void {
             m_connection_manager.stop(l_connection);
+            m_packet_logger.flush();
+          },
+
+          // Set the actions for the packet logging.
+          [this](const MySqlPacket* l_packet,
+              bool l_from_client_to_server) -> void {
+            m_packet_logger.packet_logger(l_packet, l_from_client_to_server);
           }));
     }
 
@@ -109,6 +117,7 @@ void Server::do_await_stop()
         // call will exit.
         m_acceptor.close();
         m_connection_manager.stop_all();
+        m_packet_logger.flush();
       });
 }
 

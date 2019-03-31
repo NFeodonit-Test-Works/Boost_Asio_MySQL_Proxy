@@ -25,17 +25,24 @@
 
 #include <utility>
 
+#ifdef PROXY_PACKET_DEBUG
+#include <iomanip>
+#include <iostream>
+#endif  // ifdef PROXY_PACKET_DEBUG
+
 #include "connection_manager.hpp"
 
 namespace proxy
 {
 Connection::Connection(boost::asio::ip::tcp::socket t_client_socket,
     const boost::asio::ip::tcp::endpoint& t_server_endpoint,
-    StopTransferFunc&& t_stop_handler_func)
+    StopTransferFunc&& t_stop_handler_func,
+    PacketLoggerFunc&& t_packet_logger_func)
     : m_client_socket(std::move(t_client_socket))
     , m_server_endpoint(t_server_endpoint)
     , m_server_socket(m_client_socket.get_executor().context())
     , m_stop_transfer_func(std::move(t_stop_handler_func))
+    , m_packet_logger_func(std::move(t_packet_logger_func))
 {
 }
 
@@ -96,6 +103,9 @@ void Connection::do_transfer(boost::asio::ip::tcp::socket& t_read_from,
     std::size_t t_bytes_transferred,
     bool t_from_client_to_server)
 {
+  do_packet_logging(
+      t_read_buffer, t_bytes_transferred, t_from_client_to_server);
+
   // Forward the received data on to "the other side".
   t_send_to.send(boost::asio::buffer(t_read_buffer, t_bytes_transferred));
 
@@ -114,6 +124,68 @@ void Connection::do_transfer(boost::asio::ip::tcp::socket& t_read_from,
           }
         }
       });
+}
+
+void Connection::do_packet_logging(
+    const boost::asio::mutable_buffer& t_read_buffer,
+    std::size_t t_bytes_transferred,
+    bool t_from_client_to_server)
+{
+#ifdef PROXY_PACKET_DEBUG
+  // Debug printers.
+  std::string begin_str = t_from_client_to_server ? "--->>>" : "<<<===";
+  std::string end_str = t_from_client_to_server ? "---+++" : "===|||";
+  std::cout << std::hex << std::setfill('0');  // needs to be set only once
+
+  // Prints the all buffer bytes.
+  std::cout << begin_str << "BUFFER: ";
+  for(std::size_t i = 0; i < t_read_buffer.size(); ++i) {
+    unsigned char buffer_byte =
+        static_cast<unsigned char*>(t_read_buffer.data())[i];
+    std::cout << std::setw(2) << +buffer_byte << " ";
+  }
+  std::cout << end_str << "\n";
+
+  // Prints the buffer context as string.
+  std::string data(
+      static_cast<char*>(t_read_buffer.data()), t_read_buffer.size());
+  std::cout << begin_str << "BUFFER AS STRING: " << data << end_str << "\n";
+#endif  // ifdef PROXY_PACKET_DEBUG
+
+
+  // Collects the corresponding packet from the incoming stream of bytes.
+  MySqlPacket* packet = t_from_client_to_server
+      ? static_cast<MySqlPacket*>(&m_client_packet)
+      : static_cast<MySqlPacket*>(&m_server_packet);
+
+  auto buffer_data = static_cast<unsigned char*>(t_read_buffer.data());
+
+  for(std::size_t i = 0; i < t_bytes_transferred; ++i) {
+    packet->collect(buffer_data[i], m_connection_state);
+  }
+
+
+  if(packet->is_received()) {
+#ifdef PROXY_PACKET_DEBUG
+    // Prints the all collected packet bytes.
+    std::cout << begin_str << "PACKET: "
+              << " [[[ length: " << std::setw(2) << packet->payload_length()
+              << ", sequence_id: " << std::setw(2) << packet->sequence_id()
+              << ", payload: ";
+    for(std::size_t k = 0; k < packet->payload().size(); ++k) {
+      unsigned char packet_byte =
+          static_cast<const unsigned char*>(packet->payload().data())[k];
+      std::cout << std::setw(2) << +packet_byte << " ";
+    }
+    std::cout << " ]]]\n";
+#endif  // ifdef PROXY_PACKET_DEBUG
+
+
+    // Perform the actions for the packet logging.
+    if(m_packet_logger_func) {
+      m_packet_logger_func(packet, t_from_client_to_server);
+    }
+  }
 }
 
 }  // namespace proxy

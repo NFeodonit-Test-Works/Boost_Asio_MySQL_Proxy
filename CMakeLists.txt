@@ -127,6 +127,7 @@ set_target_properties(${bamp_EXE_NAME} PROPERTIES
 
 target_compile_definitions(${bamp_EXE_NAME} PRIVATE
   BOOST_ASIO_NO_DEPRECATED
+#  PROXY_PACKET_DEBUG  # Set to turn the debug printers on.
 )
 
 target_include_directories(${bamp_EXE_NAME} PRIVATE
@@ -138,10 +139,14 @@ target_sources(${bamp_EXE_NAME} PRIVATE
 
   "${CMAKE_CURRENT_LIST_DIR}/src/connection.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/src/connection_manager.cpp"
+  "${CMAKE_CURRENT_LIST_DIR}/src/packet.cpp"
+  "${CMAKE_CURRENT_LIST_DIR}/src/packet_logger.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/src/server.cpp"
 
   "${CMAKE_CURRENT_LIST_DIR}/src/connection.hpp"
   "${CMAKE_CURRENT_LIST_DIR}/src/connection_manager.hpp"
+  "${CMAKE_CURRENT_LIST_DIR}/src/packet.hpp"
+  "${CMAKE_CURRENT_LIST_DIR}/src/packet_logger.hpp"
   "${CMAKE_CURRENT_LIST_DIR}/src/server.hpp"
 )
 

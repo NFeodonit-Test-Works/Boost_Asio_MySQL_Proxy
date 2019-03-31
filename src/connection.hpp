@@ -31,6 +31,8 @@
 
 #include <boost/asio.hpp>
 
+#include "packet.hpp"
+
 namespace proxy
 {
 class Connection;
@@ -52,10 +54,15 @@ public:
   /// Functor for the actions for the connection stop.
   using StopTransferFunc = std::function<void(ConnectionPtr t_connection)>;
 
+  /// Functor for the actions for the packet logging.
+  using PacketLoggerFunc = std::function<void(
+      const MySqlPacket* t_packet, bool t_from_client_to_server)>;
+
   /// Construct a connection with the given client socket and server endpoint.
   explicit Connection(boost::asio::ip::tcp::socket t_client_socket,
       const boost::asio::ip::tcp::endpoint& t_server_endpoint,
-      StopTransferFunc&& t_stop_handler_func);
+      StopTransferFunc&& t_stop_handler_func,
+      PacketLoggerFunc&& t_packet_logger_func);
 
   /// Start the first asynchronous operation for the connection.
   void start();
@@ -77,6 +84,12 @@ private:
       std::size_t t_bytes_transferred,
       bool t_from_client_to_server);
 
+  /// Performs the packet collection from the incoming stream
+  /// and runs the packet logging.
+  void do_packet_logging(const boost::asio::mutable_buffer& t_read_buffer,
+      std::size_t t_bytes_transferred,
+      bool t_from_client_to_server);
+
   /// Socket for the connection from the client.
   boost::asio::ip::tcp::socket m_client_socket;
 
@@ -86,7 +99,12 @@ private:
   /// Socket for the connection to the server.
   boost::asio::ip::tcp::socket m_server_socket;
 
+  // Min BUFFER_LENGTH == 2 for 100 connections, debug build.
+#ifdef PROXY_PACKET_DEBUG
+  static const std::size_t BUFFER_LENGTH = 60;
+#else  // ifdef PROXY_PACKET_DEBUG
   static const std::size_t BUFFER_LENGTH = 8192;
+#endif  // ifdef PROXY_PACKET_DEBUG
 
   /// Buffer for the incoming data from the client.
   std::array<char, BUFFER_LENGTH> m_client_buffer;
@@ -96,6 +114,19 @@ private:
 
   /// Set the actions for the connection stop.
   StopTransferFunc m_stop_transfer_func;
+
+  /// Stores the current state of the connection with MySQL server.
+  MySqlConnectionState m_connection_state =
+      MySqlConnectionState::CONNECTION_PHASE;
+
+  /// Collects the MySQL packet from the client.
+  FromClientPacket m_client_packet;
+
+  /// Collects the MySQL packet from the server.
+  FromServerPacket m_server_packet;
+
+  /// Set the actions for the packet logging.
+  PacketLoggerFunc m_packet_logger_func;
 };  // class connection
 
 }  // namespace proxy

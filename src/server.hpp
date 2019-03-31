@@ -30,6 +30,7 @@
 
 #include "connection.hpp"
 #include "connection_manager.hpp"
+#include "packet_logger.hpp"
 
 namespace proxy
 {
@@ -78,6 +79,9 @@ private:
 
   /// The connection manager which owns all live connections.
   ConnectionManager m_connection_manager;
+
+  /// Packet logger which writes the SQL requests to the log file.
+  PacketLogger m_packet_logger;
 };
 
 }  // namespace proxy
