@@ -1,0 +1,6 @@
+[submodule "libs/LibCMaker"]
+	path = libs/LibCMaker
+	url = https://github.com/LibCMaker/LibCMaker.git
+[submodule "libs/LibCMaker_Boost"]
+	path = libs/LibCMaker_Boost
+	url = https://github.com/LibCMaker/LibCMaker_Boost.git
