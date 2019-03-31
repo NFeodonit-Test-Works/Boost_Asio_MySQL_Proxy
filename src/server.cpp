@@ -60,6 +60,10 @@ Server::Server(const std::string& t_client_address,
   m_acceptor.bind(client_ep);
   m_acceptor.listen();
 
+  // Set the server endpoint for the server socket.
+  m_server_endpoint =
+      *resolver.resolve(t_server_address, t_server_port).begin();
+
   do_accept();
 }
 
@@ -83,13 +87,13 @@ void Server::do_accept()
     }
 
     if(!l_error) {
-      m_connection_manager.start(
-          std::make_shared<Connection>(std::move(l_client_socket),
+      m_connection_manager.start(std::make_shared<Connection>(
+          std::move(l_client_socket), m_server_endpoint,
 
-              // Set the actions for the connection stop.
-              [this](ConnectionPtr l_connection) -> void {
-                m_connection_manager.stop(l_connection);
-              }));
+          // Set the actions for the connection stop.
+          [this](ConnectionPtr l_connection) -> void {
+            m_connection_manager.stop(l_connection);
+          }));
     }
 
     do_accept();

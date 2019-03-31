@@ -73,6 +73,9 @@ private:
   /// Acceptor used to listen for incoming connections.
   boost::asio::ip::tcp::acceptor m_acceptor;
 
+  /// Endpoint for the server socket.
+  boost::asio::ip::tcp::endpoint m_server_endpoint;
+
   /// The connection manager which owns all live connections.
   ConnectionManager m_connection_manager;
 };

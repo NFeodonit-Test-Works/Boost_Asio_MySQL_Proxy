@@ -54,6 +54,7 @@ public:
 
   /// Construct a connection with the given client socket and server endpoint.
   explicit Connection(boost::asio::ip::tcp::socket t_client_socket,
+      const boost::asio::ip::tcp::endpoint& t_server_endpoint,
       StopTransferFunc&& t_stop_handler_func);
 
   /// Start the first asynchronous operation for the connection.
@@ -63,11 +64,35 @@ public:
   void stop();
 
 private:
+  /// Perform an asynchronous connection operation.
+  void do_connect();
+
+  /// Perform an asynchronous receive operation.
+  void do_receive();
+
+  /// The handler used to process the transfer operation.
+  void do_transfer(boost::asio::ip::tcp::socket& t_read_from,
+      boost::asio::ip::tcp::socket& t_send_to,
+      const boost::asio::mutable_buffer& t_read_buffer,
+      std::size_t t_bytes_transferred,
+      bool t_from_client_to_server);
+
   /// Socket for the connection from the client.
   boost::asio::ip::tcp::socket m_client_socket;
 
+  /// Endpoint for the server socket.
+  const boost::asio::ip::tcp::endpoint& m_server_endpoint;
+
+  /// Socket for the connection to the server.
+  boost::asio::ip::tcp::socket m_server_socket;
+
+  static const std::size_t BUFFER_LENGTH = 8192;
+
   /// Buffer for the incoming data from the client.
-  std::array<char, 8192> m_client_buffer;
+  std::array<char, BUFFER_LENGTH> m_client_buffer;
+
+  /// Buffer for the incoming data from the server.
+  std::array<char, BUFFER_LENGTH> m_server_buffer;
 
   /// Set the actions for the connection stop.
   StopTransferFunc m_stop_transfer_func;
