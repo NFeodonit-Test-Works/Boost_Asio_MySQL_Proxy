@@ -126,3 +126,11 @@ cleanup
 ```
 
 All SQL requests from the client to the MySQL server should be in the file 'sql_log.log'.
+
+
+## Used documentation
+
+- [Boost.Asio](https://www.boost.org/doc/libs/1_69_0/doc/html/boost_asio.html)
+- [MySQL Source Code Documentation](https://dev.mysql.com/doc/dev/mysql-server/latest/)
+  - [MySQL Packets](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_basic_packets.html)
+  - [Connection Lifecycle](https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_lifecycle.html)
