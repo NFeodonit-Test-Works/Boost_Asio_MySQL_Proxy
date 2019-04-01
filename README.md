@@ -18,7 +18,9 @@ cd Boost_Asio_MySQL_Proxy
 mkdir build
 cd build
 
-cmake .. -DCMAKE_INSTALL_PREFIX:PATH=./install -DCMAKE_BUILD_TYPE:STRING=Release
+cmake .. \
+  -DCMAKE_INSTALL_PREFIX:PATH=/full/path/to/project/libraries/install/directory \
+  -DCMAKE_BUILD_TYPE:STRING=Release
 
 cmake --build .
 ```
@@ -45,7 +47,7 @@ cd build
 set prj_BUILD_TYPE=Release
 
 cmake .. ^
-  -DCMAKE_INSTALL_PREFIX:PATH=\path\to\project\libraries\install\directory ^
+  -DCMAKE_INSTALL_PREFIX:PATH=\full\path\to\project\libraries\install\directory ^
   -DCMAKE_BUILD_TYPE:STRING=%prj_BUILD_TYPE% ^
   -DBUILD_SHARED_LIBS:BOOL=ON ^
   -Dcmr_USE_MSVC_STATIC_RUNTIME=OFF ^
