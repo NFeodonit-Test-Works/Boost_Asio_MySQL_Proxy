@@ -21,108 +21,66 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ****************************************************************************
 
-cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
+set(prj_options "${CMAKE_CURRENT_LIST_DIR}/.prj_options.cmake")
+if(EXISTS ${prj_options})
+  include(${prj_options})
+endif()
+
+if(NOT DEFINED CMAKE_INSTALL_PREFIX)
+  option(cmr_DEFAULT_CMAKE_INSTALL_PREFIX "cmr_DEFAULT_CMAKE_INSTALL_PREFIX" ON)
+endif()
+
+cmake_minimum_required(VERSION 3.9)
 
 project(Boost_Asio_MySQL_Proxy CXX)
 
-# Used by LibCMaker_Boost for Boost building.
-set(CMAKE_CXX_STANDARD 11)
-if(MSVC)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
-
-
-#-----------------------------------------------------------------------
-# LibCMaker_Boost
-#-----------------------------------------------------------------------
-
+option(BUILD_SHARED_LIBS "BUILD_SHARED_LIBS" OFF)
+option(CMAKE_VERBOSE_MAKEFILE "CMAKE_VERBOSE_MAKEFILE" OFF)
 option(cmr_PRINT_DEBUG "cmr_PRINT_DEBUG" OFF)
 
 
 #-----------------------------------------------------------------------
-# Compiler flags
+# Check compiler's version
 #-----------------------------------------------------------------------
 
-option(cmr_USE_MSVC_STATIC_RUNTIME "cmr_USE_MSVC_STATIC_RUNTIME" ON)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+    AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0.0)
+  message(FATAL_ERROR "GNU g++ compiler version 9+ is required.")
+endif()
 
-if(cmr_USE_MSVC_STATIC_RUNTIME AND MSVC AND NOT BUILD_SHARED_LIBS)
-  # Set MSVC static runtime flags for all configurations.
-  # See:
-  # https://stackoverflow.com/a/20804336
-  # https://stackoverflow.com/a/14172871
-  foreach(cfg "" ${CMAKE_CONFIGURATION_TYPES})
-    set(c_flag_var   CMAKE_C_FLAGS)
-    set(cxx_flag_var CMAKE_CXX_FLAGS)
-    if(cfg)
-      string(TOUPPER ${cfg} cfg_upper)
-      set(c_flag_var   "${c_flag_var}_${cfg_upper}")
-      set(cxx_flag_var "${cxx_flag_var}_${cfg_upper}")
-    endif()
-    if(${c_flag_var} MATCHES "/MD")
-      string(REPLACE "/MD" "/MT" ${c_flag_var} "${${c_flag_var}}")
-      set(${c_flag_var} ${${c_flag_var}} CACHE STRING
-        "Flags used by the C compiler during ${cfg_upper} builds." FORCE
-      )
-    endif()
-    if(${cxx_flag_var} MATCHES "/MD")
-      string(REPLACE "/MD" "/MT" ${cxx_flag_var} "${${cxx_flag_var}}")
-      set(${cxx_flag_var} ${${cxx_flag_var}} CACHE STRING
-        "Flags used by the CXX compiler during ${cfg_upper} builds." FORCE
-      )
-    endif()
-  endforeach()
+if((CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"
+     OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+     AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0.0)
+  message(FATAL_ERROR "Clang compiler version 9+ is required.")
+endif()
+
+if(MSVC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.15)
+  message(FATAL_ERROR "MSVC compiler version 19.15+ is required.")
 endif()
 
 
-#-----------------------------------------------------------------------
-# Configure the find_package()
-#-----------------------------------------------------------------------
-
-# Set CMake's search path for find_*() commands.
-list(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}")
-
 
 #-----------------------------------------------------------------------
-# Set path vars
+# Boost_Asio_MySQL_Proxy project
 #-----------------------------------------------------------------------
 
-set(LibCMaker_LIB_DIR "${CMAKE_CURRENT_LIST_DIR}/libs")
-set(cmr_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-if(NOT cmr_DOWNLOAD_DIR)
-  set(cmr_DOWNLOAD_DIR "${PROJECT_BINARY_DIR}/download")
-endif()
-if(NOT cmr_UNPACKED_DIR)
-  set(cmr_UNPACKED_DIR "${cmr_DOWNLOAD_DIR}/unpacked")
-endif()
+include(print_system_info)
+print_system_info()
+include(compile_flags)
+include(find_libraries)
 
 
 #-----------------------------------------------------------------------
-# LibCMaker settings
-#-----------------------------------------------------------------------
-
-set(LibCMaker_DIR "${LibCMaker_LIB_DIR}/LibCMaker")
-list(APPEND CMAKE_MODULE_PATH "${LibCMaker_DIR}/cmake")
-include(cmr_find_package)
-
-
-#-----------------------------------------------------------------------
-# Download, configure, build, install and find the required libraries
-#-----------------------------------------------------------------------
-
-set(BOOST_lib_DIR "${CMAKE_CURRENT_LIST_DIR}/libs/LibCMaker_Boost")
-include("${CMAKE_CURRENT_LIST_DIR}/cmake/cmr_build_boost.cmake")
-
-
-#-----------------------------------------------------------------------
-# Boost_Asio_MySQL_Proxy
+# Boost_Asio_MySQL_Proxy sources
 #-----------------------------------------------------------------------
 
 set(bamp_EXE_NAME "boost-asio-mysql-proxy")
 
 add_executable(${bamp_EXE_NAME} "")
 set_target_properties(${bamp_EXE_NAME} PROPERTIES
-  CXX_STANDARD 11
+  CXX_STANDARD 17
 )
 
 target_compile_definitions(${bamp_EXE_NAME} PRIVATE
@@ -161,6 +119,6 @@ target_sources(${bamp_EXE_NAME} PRIVATE
 # TODO: Use the component autodetection from 'FindBoost.cmake'.
 target_link_libraries(${bamp_EXE_NAME} PRIVATE
   Boost::disable_autolinking Boost::boost
-  Boost::regex Boost::coroutine Boost::context Boost::thread Boost::chrono
+  Boost::thread Boost::chrono
   Boost::system Boost::date_time Boost::atomic
 )
