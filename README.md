@@ -13,7 +13,7 @@ CMake should be 3.4+ versions for LibCMaker.
 Use the following commands:
 
 ```
-git clone --recursive https://github.com/NFeoTestWorks/Boost_Asio_MySQL_Proxy
+git clone https://github.com/NFeodonit-Test-Works/Boost_Asio_MySQL_Proxy.git
 cd Boost_Asio_MySQL_Proxy
 mkdir build
 cd build
@@ -39,7 +39,7 @@ CMake should be 3.4+ versions for LibCMaker.
 Should work with the following commands:
 
 ```
-git clone --recursive https://github.com/NFeoTestWorks/Boost_Asio_MySQL_Proxy
+git clone https://github.com/NFeodonit-Test-Works/Boost_Asio_MySQL_Proxy.git
 cd Boost_Asio_MySQL_Proxy
 mkdir build
 cd build
@@ -72,7 +72,7 @@ At the stage of the configuring of the main project by CMake, the following step
 
 2. Boost library is compiling.
 
-3. Boost library is installing.
+3. Boost library is installing to the pass in ```CMAKE_INSTALL_PREFIX```.
 
 4. Boost library is finding by the CMake command ```find_package(Boost)``` in the main CMake project.
 
@@ -95,6 +95,14 @@ The project running has been tested only on Ubuntu 18.04.
 
 The following commands can be used for testing.
 
+In mysql client, run:
+
+```
+create database sysbench;
+```
+
+And set up access rights to the database for the user ```username``` (must be a valid user name).
+
 In one terminal window:
 ```
 ./boost-asio-mysql-proxy 127.0.0.1 16530 127.0.0.1 3306 sql_log.log
@@ -102,30 +110,45 @@ In one terminal window:
 
 In another terminal window:
 ```
+THREADS=100
+TIME=300
+RATE=0
+REPORT_INTERVAL=10
+DRIVER=mysql
+HOST=127.0.0.1
+PORT=16530
+DB=sysbench
+USER=username
+PASSWD=userpass
+SCRIPT=/usr/share/sysbench/oltp_read_write.lua
+ENGINE=innodb
+TABLES=10
+TABLE_SIZE=100000
+SKIP_TRX=off
+
 sysbench \
---threads=100 --time=300 --rate=0 --report-interval=10 \
---db-driver=mysql --mysql-host=127.0.0.1 --mysql-port=16530 \
---mysql-db=sysbench --mysql-user=username --mysql-password=userpass \
-/usr/share/sysbench/oltp_read_write.lua --mysql_storage_engine=innodb --tables=10 --table_size=100000 --skip_trx=off \
+--threads=${THREADS} --time=${TIME} --rate=${RATE} --report-interval=${REPORT_INTERVAL} \
+--db-driver=${DRIVER} --mysql-host=${HOST} --mysql-port=${PORT} \
+--mysql-db=${DB} --mysql-user=${USER} --mysql-password=${PASSWD} \
+${SCRIPT} --mysql_storage_engine=${ENGINE} --tables=${TABLES} --table_size=${TABLE_SIZE} --skip_trx=${SKIP_TRX} \
 prepare
 
 sysbench \
---threads=100 --time=300 --rate=0 --report-interval=10 \
---db-driver=mysql --mysql-host=127.0.0.1 --mysql-port=16530 \
---mysql-db=sysbench --mysql-user=username --mysql-password=userpass \
-/usr/share/sysbench/oltp_read_write.lua --mysql_storage_engine=innodb --tables=10 --table_size=100000 --skip_trx=off \
+--threads=${THREADS} --time=${TIME} --rate=${RATE} --report-interval=${REPORT_INTERVAL} \
+--db-driver=${DRIVER} --mysql-host=${HOST} --mysql-port=${PORT} \
+--mysql-db=${DB} --mysql-user=${USER} --mysql-password=${PASSWD} \
+${SCRIPT} --mysql_storage_engine=${ENGINE} --tables=${TABLES} --table_size=${TABLE_SIZE} --skip_trx=${SKIP_TRX} \
 run
 
 sysbench \
---threads=100 --time=300 --rate=0 --report-interval=10 \
---db-driver=mysql --mysql-host=127.0.0.1 --mysql-port=16530 \
---mysql-db=sysbench --mysql-user=username --mysql-password=userpass \
-/usr/share/sysbench/oltp_read_write.lua --mysql_storage_engine=innodb --tables=10 --table_size=100000 --skip_trx=off \
+--threads=${THREADS} --time=${TIME} --rate=${RATE} --report-interval=${REPORT_INTERVAL} \
+--db-driver=${DRIVER} --mysql-host=${HOST} --mysql-port=${PORT} \
+--mysql-db=${DB} --mysql-user=${USER} --mysql-password=${PASSWD} \
+${SCRIPT} --mysql_storage_engine=${ENGINE} --tables=${TABLES} --table_size=${TABLE_SIZE} --skip_trx=${SKIP_TRX} \
 cleanup
-
 ```
 
-All SQL requests from the client to the MySQL server should be in the file 'sql_log.log'.
+All SQL requests from the client to the MySQL server should be in the file ```sql_log.log```.
 
 
 ## Used documentation
