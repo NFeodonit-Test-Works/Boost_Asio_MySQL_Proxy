@@ -28,7 +28,6 @@
 
 #include <boost/asio.hpp>
 
-#include "connection.hpp"
 #include "connection_manager.hpp"
 #include "packet_logger.hpp"
 

@@ -26,7 +26,9 @@
 
 #include <cstdint>
 #include <string>
-#include <vector>
+#ifdef PROXY_PACKET_DEBUG
+  #include <vector>
+#endif  // ifdef PROXY_PACKET_DEBUG
 
 namespace proxy
 {

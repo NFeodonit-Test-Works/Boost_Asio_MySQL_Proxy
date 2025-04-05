@@ -24,7 +24,6 @@
 #ifndef PROXY_PACKET_LOGGER_HPP
 #define PROXY_PACKET_LOGGER_HPP
 
-#include <cstddef>
 #include <fstream>
 
 #include <boost/asio.hpp>

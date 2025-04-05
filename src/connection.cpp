@@ -30,8 +30,6 @@
 #include <iostream>
 #endif  // ifdef PROXY_PACKET_DEBUG
 
-#include "connection_manager.hpp"
-
 namespace proxy
 {
 Connection::Connection(boost::asio::ip::tcp::socket t_client_socket,

@@ -24,7 +24,6 @@
 #include "server.hpp"
 
 #include <csignal>
-#include <cstddef>
 #include <utility>
 
 namespace proxy
