@@ -51,7 +51,7 @@ Server::Server(const std::string& t_client_address,
 
   // Start listening on the client socket.
   boost::asio::ip::tcp::resolver resolver(m_io_context);
-  boost::asio::ip::tcp::endpoint client_ep =
+  const boost::asio::ip::tcp::endpoint client_ep =
       *resolver.resolve(t_client_address, t_client_port).begin();
 
   // Open the acceptor with the option to reuse the address (i.e. SO_REUSEADDR).
@@ -92,7 +92,7 @@ void Server::do_accept()
 
           // Set the actions for the connection stop.
           [this](ConnectionPtr l_connection) -> void {
-            m_connection_manager.stop(l_connection);
+            m_connection_manager.stop(std::move(l_connection));
             m_packet_logger.flush();
           },
 

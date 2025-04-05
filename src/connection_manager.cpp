@@ -27,14 +27,14 @@
 
 namespace proxy
 {
-void ConnectionManager::start(ConnectionPtr t_connection)
+void ConnectionManager::start(const ConnectionPtr& t_connection)
 {
   m_connections.insert(t_connection);
   t_connection->start();
   std::cout << "Opened connections: " << m_connections.size() << "\n";
 }
 
-void ConnectionManager::stop(ConnectionPtr t_connection)
+void ConnectionManager::stop(const ConnectionPtr& t_connection)
 {
   t_connection->stop();
   m_connections.erase(t_connection);

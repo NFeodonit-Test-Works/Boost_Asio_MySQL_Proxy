@@ -328,7 +328,7 @@ void FromServerPacket::connection_phase_parse(
 {
   // See https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_connection_lifecycle.html
   if(m_payload_first_part) {
-    MySqlResponse::Response response =
+    const MySqlResponse::Response response =
         MySqlResponse::get_response(t_payload_0, m_payload_length);
     switch(response) {
       case MySqlResponse::Response::OK_PACKET: {

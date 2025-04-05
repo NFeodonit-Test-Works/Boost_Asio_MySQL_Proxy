@@ -41,8 +41,8 @@ void PacketLogger::packet_logger(
 {
   // If the packet is from the client, write it to the log file.
   if(t_from_client_to_server) {
-    auto client_packet = dynamic_cast<const FromClientPacket*>(t_packet);
-    if(!client_packet) {
+    const auto* client_packet = dynamic_cast<const FromClientPacket*>(t_packet);
+    if(client_packet == nullptr) {
       return;
     }
 

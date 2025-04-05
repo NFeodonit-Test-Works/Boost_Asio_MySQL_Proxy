@@ -39,6 +39,8 @@ Connection::Connection(boost::asio::ip::tcp::socket t_client_socket,
     : m_client_socket(std::move(t_client_socket))
     , m_server_endpoint(t_server_endpoint)
     , m_server_socket(m_client_socket.get_executor().context())
+    , m_client_buffer{}
+    , m_server_buffer{}
     , m_stop_transfer_func(std::move(t_stop_handler_func))
     , m_packet_logger_func(std::move(t_packet_logger_func))
 {
@@ -156,7 +158,7 @@ void Connection::do_packet_logging(
       ? static_cast<MySqlPacket*>(&m_client_packet)
       : static_cast<MySqlPacket*>(&m_server_packet);
 
-  auto buffer_data = static_cast<unsigned char*>(t_read_buffer.data());
+  auto* buffer_data = static_cast<unsigned char*>(t_read_buffer.data());
 
   for(std::size_t i = 0; i < t_bytes_transferred; ++i) {
     packet->collect(buffer_data[i], m_connection_state);

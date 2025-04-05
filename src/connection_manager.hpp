@@ -46,10 +46,10 @@ public:
   explicit ConnectionManager() = default;
 
   /// Add the specified connection to the manager and start it.
-  void start(ConnectionPtr t_connection);
+  void start(const ConnectionPtr& t_connection);
 
   /// Stop the specified connection.
-  void stop(ConnectionPtr t_connection);
+  void stop(const ConnectionPtr& t_connection);
 
   /// Stop all connections.
   void stop_all();
