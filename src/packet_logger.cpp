@@ -24,6 +24,7 @@
 #include "packet_logger.hpp"
 
 #include <string>
+#include <string_view>
 
 #ifdef PROXY_PACKET_DEBUG
 #include <iostream>
@@ -47,7 +48,7 @@ void PacketLogger::packet_logger(
     }
 
     // Get the string representation of the client's command.
-    std::string command_string = client_packet->get_command_string();
+    const std::string_view command_string = client_packet->get_command_string();
 
     if(!command_string.empty()) {
 #ifdef PROXY_PACKET_DEBUG
