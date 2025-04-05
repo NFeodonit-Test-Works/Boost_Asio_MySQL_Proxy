@@ -100,7 +100,6 @@ private:
 class MySqlResponse
 {
 public:
-  MySqlResponse() = delete;
   MySqlResponse(const MySqlResponse&) = delete;
   MySqlResponse(MySqlResponse&&) = delete;
   MySqlResponse& operator=(const MySqlResponse&) = delete;

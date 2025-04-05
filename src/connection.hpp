@@ -43,7 +43,6 @@ using ConnectionPtr = std::shared_ptr<Connection>;
 class Connection : public std::enable_shared_from_this<Connection>
 {
 public:
-  Connection() = delete;
   Connection(const Connection&) = delete;
   Connection(Connection&&) = delete;
   Connection& operator=(const Connection&) = delete;

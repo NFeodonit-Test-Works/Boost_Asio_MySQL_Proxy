@@ -38,7 +38,6 @@ namespace proxy
 class Server
 {
 public:
-  Server() = delete;
   Server(const Server&) = delete;
   Server(Server&&) = delete;
   Server& operator=(const Server&) = delete;

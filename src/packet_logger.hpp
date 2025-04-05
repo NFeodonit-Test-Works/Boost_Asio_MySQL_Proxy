@@ -37,7 +37,6 @@ namespace proxy
 class PacketLogger
 {
 public:
-  PacketLogger() = delete;
   PacketLogger(const PacketLogger&) = delete;
   PacketLogger(PacketLogger&&) = delete;
   PacketLogger& operator=(const PacketLogger&) = delete;
