@@ -1,0 +1,513 @@
+# === Common ===
+
+sudo: false
+
+language: cpp
+
+env:
+  global:
+    # NOTE: LibCMaker lib name.
+    # NOTE: See below the lib deps in 'before_install' for every target OS.
+    # NOTE: See below 'after_success' with LibCMaker lib triggers.
+    - cmr_LIB_NAME=Boost
+    - cmr_BUILD_TESTING=ON
+
+    - cmr_WORK_DIR=${HOME}
+    - cmr_REPO_DIR=${HOME}/build/LibCMaker/LibCMaker_${cmr_LIB_NAME}
+    - cmr_SAMPLE_SRC_DIR=${cmr_REPO_DIR}/samples/TestCompileWith${cmr_LIB_NAME}
+    - cmr_SAMPLE_DIR=${cmr_WORK_DIR}/TestCompileWith${cmr_LIB_NAME}
+    - cmr_SAMPLE_LIB_DIR=${cmr_SAMPLE_DIR}/libs
+    - cmr_HOST_TOOLS_PROJECT_DIR=${cmr_SAMPLE_DIR}/host_tools
+
+    - cmr_BUILD_DIR=${cmr_SAMPLE_DIR}/build
+    - cmr_INSTALL_DIR=${cmr_BUILD_DIR}/install
+    - cmr_DOWNLOAD_DIR=${cmr_BUILD_DIR}/download
+
+    - cmr_JOBS_CNT=4
+
+
+# === Linux ===
+
+build_linux: &build_linux
+  stage: Test
+  os: linux
+  dist: xenial
+
+  env: &build_linux_env
+    - cmr_TARGET_OS=linux
+    - cmr_JOBS="-j${cmr_JOBS_CNT}"
+
+    - cmr_CMAKE_RELEASE=cmake-3.4.0-Linux-x86_64
+    - cmr_CMAKE_DIR=${cmr_INSTALL_DIR}/${cmr_CMAKE_RELEASE}
+    - cmr_CMAKE_CMD=${cmr_CMAKE_DIR}/bin/cmake
+    - cmr_CTEST_CMD=${cmr_CMAKE_DIR}/bin/ctest
+
+  before_install:
+    - cp -r ${cmr_SAMPLE_SRC_DIR} ${cmr_WORK_DIR}
+    - mkdir ${cmr_SAMPLE_LIB_DIR}
+    - cp -r ${cmr_REPO_DIR} ${cmr_SAMPLE_LIB_DIR}
+
+    - mkdir ${cmr_BUILD_DIR}
+    - mkdir ${cmr_INSTALL_DIR}
+    - mkdir ${cmr_DOWNLOAD_DIR}
+
+    - wget -nv -c -N -P ${cmr_DOWNLOAD_DIR} https://cmake.org/files/v3.4/${cmr_CMAKE_RELEASE}.tar.gz
+    - tar -xf ${cmr_DOWNLOAD_DIR}/${cmr_CMAKE_RELEASE}.tar.gz --directory ${cmr_INSTALL_DIR}
+
+    # NOTE: LibCMaker lib deps.
+    - git clone https://github.com/LibCMaker/LibCMaker.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker
+    - git clone https://github.com/LibCMaker/LibCMaker_GoogleTest.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker_GoogleTest
+    - git clone https://github.com/LibCMaker/LibCMaker_ICU.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker_ICU
+
+
+  script:
+    - cd ${cmr_BUILD_DIR}
+
+    - ${cmr_CMAKE_CMD} ${cmr_SAMPLE_DIR}
+        -Dcmr_BUILD_MULTIPROC_CNT=${cmr_JOBS_CNT}
+        -Dcmr_PRINT_DEBUG=ON
+        -DCMAKE_VERBOSE_MAKEFILE=ON
+        -DCMAKE_COLOR_MAKEFILE=ON
+        -DBUILD_TESTING=${cmr_BUILD_TESTING}
+        -DCMAKE_INSTALL_PREFIX=${cmr_INSTALL_DIR}
+        -Dcmr_DOWNLOAD_DIR=${cmr_DOWNLOAD_DIR}
+        -Dcmr_UNPACKED_DIR=${cmr_DOWNLOAD_DIR}/unpacked
+          -DCMAKE_BUILD_TYPE=${cmr_CMAKE_BUILD_TYPE}
+          -DBUILD_SHARED_LIBS=${cmr_BUILD_SHARED_LIBS}
+        -DBOOST_WITHOUT_ICU=OFF
+          -DBOOST_BUILD_ALL_COMPONENTS=ON
+          -DBOOST_REBUILD_OPTION=OFF
+          -DBOOST_DEBUG_SHOW_COMMANDS=ON
+          -DBOOST_DEBUG_CONFIGURATION=ON
+          -DBOOST_DEBUG_BUILDING=OFF
+          -DBOOST_DEBUG_GENERATOR=ON
+          -DBOOST_DEBUG_INSTALL=OFF
+
+    - ${cmr_CMAKE_CMD} --build . -- ${cmr_JOBS}
+
+    - ${cmr_CTEST_CMD} --output-on-failure
+
+
+build_linux_gcc: &build_linux_gcc
+  <<: *build_linux
+  compiler: gcc
+
+
+build_linux_clang: &build_linux_clang
+  <<: *build_linux
+  compiler: clang
+
+
+# === Windows ===
+
+build_windows: &build_windows
+  stage: Test
+  os: windows
+  env: &build_windows_env
+    - cmr_TARGET_OS=windows
+
+    - cmr_CMAKE_RELEASE=cmake-3.11.0-win64-x64
+    - cmr_CMAKE_DIR=${cmr_INSTALL_DIR}/${cmr_CMAKE_RELEASE}
+    - cmr_CMAKE_CMD=${cmr_CMAKE_DIR}/bin/cmake
+    - cmr_CTEST_CMD=${cmr_CMAKE_DIR}/bin/ctest
+
+    - cmr_CMAKE_BUILD_TYPE=Release
+
+    - PATH=${cmr_INSTALL_DIR}/bin:${cmr_INSTALL_DIR}/lib:${PATH}
+
+    - cmr_BOOST_WITHOUT_ICU=OFF
+    - cmr_WORKAROUND_CMD=pwd
+
+  before_install:
+    - cp -r ${cmr_SAMPLE_SRC_DIR} ${cmr_WORK_DIR}
+    - mkdir ${cmr_SAMPLE_LIB_DIR}
+    - cp -r ${cmr_REPO_DIR} ${cmr_SAMPLE_LIB_DIR}
+
+    - mkdir ${cmr_BUILD_DIR}
+    - mkdir ${cmr_INSTALL_DIR}
+    - mkdir ${cmr_DOWNLOAD_DIR}
+
+    - wget -nv -c -N -P ${cmr_DOWNLOAD_DIR} https://cmake.org/files/v3.11/${cmr_CMAKE_RELEASE}.zip
+    - 7z.exe x -aoa -o${cmr_INSTALL_DIR} ${cmr_DOWNLOAD_DIR}/${cmr_CMAKE_RELEASE}.zip
+
+    # NOTE: LibCMaker lib deps.
+    - git clone https://github.com/LibCMaker/LibCMaker.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker
+    - git clone https://github.com/LibCMaker/LibCMaker_GoogleTest.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker_GoogleTest
+    - git clone https://github.com/LibCMaker/LibCMaker_ICU.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker_ICU
+
+  script:
+    - cd ${cmr_BUILD_DIR}
+
+    - ${cmr_CMAKE_CMD} ${cmr_SAMPLE_DIR}
+        -Dcmr_BUILD_MULTIPROC_CNT=${cmr_JOBS_CNT}
+        -Dcmr_PRINT_DEBUG=ON
+        -DCMAKE_VERBOSE_MAKEFILE=ON
+        -DCMAKE_COLOR_MAKEFILE=ON
+        -DBUILD_TESTING=${cmr_BUILD_TESTING}
+        -DCMAKE_INSTALL_PREFIX=${cmr_INSTALL_DIR}
+        -Dcmr_DOWNLOAD_DIR=${cmr_DOWNLOAD_DIR}
+        -Dcmr_UNPACKED_DIR=${cmr_DOWNLOAD_DIR}/unpacked
+          -DCMAKE_BUILD_TYPE=${cmr_CMAKE_BUILD_TYPE}
+          -DBUILD_SHARED_LIBS=${cmr_BUILD_SHARED_LIBS}
+        -DCMAKE_GENERATOR="${cmr_CMAKE_GENERATOR}"
+          -DCMAKE_GENERATOR_PLATFORM="${cmr_CMAKE_GENERATOR_PLATFORM}"
+          -DCMAKE_GENERATOR_TOOLSET="${cmr_CMAKE_GENERATOR_TOOLSET}"
+          -DCMAKE_CONFIGURATION_TYPES=${cmr_CMAKE_BUILD_TYPE}
+        -DBOOST_WITHOUT_ICU=${cmr_BOOST_WITHOUT_ICU}
+          -DBOOST_BUILD_ALL_COMPONENTS=ON
+          -DBOOST_REBUILD_OPTION=OFF
+          -DBOOST_DEBUG_SHOW_COMMANDS=ON
+          -DBOOST_DEBUG_CONFIGURATION=ON
+          -DBOOST_DEBUG_BUILDING=OFF
+          -DBOOST_DEBUG_GENERATOR=ON
+          -DBOOST_DEBUG_INSTALL=OFF
+
+    - ${cmr_CMAKE_CMD} --build . --config ${cmr_CMAKE_BUILD_TYPE}
+
+    - ${cmr_WORKAROUND_CMD}
+
+    - ${cmr_CTEST_CMD} --output-on-failure --build-config ${cmr_CMAKE_BUILD_TYPE}
+
+
+build_windows_msvc: &build_windows_msvc
+  <<: *build_windows
+  env: &build_windows_msvc_env
+    - *build_windows_env
+    - cmr_CMAKE_GENERATOR="Visual Studio 15 2017"
+
+
+build_windows_msvc_x64: &build_windows_msvc_x64
+  <<: *build_windows_msvc
+  env: &build_windows_msvc_x64_env
+    - *build_windows_msvc_env
+    - cmr_CMAKE_GENERATOR_PLATFORM="x64"
+    - cmr_CMAKE_GENERATOR_TOOLSET="v141,host=x64"
+
+
+build_windows_msvc_x32: &build_windows_msvc_x32
+  <<: *build_windows_msvc
+  env: &build_windows_msvc_x32_env
+    - *build_windows_msvc_env
+    - cmr_CMAKE_GENERATOR_PLATFORM="Win32"
+    - cmr_CMAKE_GENERATOR_TOOLSET="v141,host=x64"
+
+
+build_windows_msvc_winxp: &build_windows_msvc_winxp
+  <<: *build_windows_msvc
+  env: &build_windows_msvc_winxp_env
+    - *build_windows_msvc_env
+    - cmr_CMAKE_GENERATOR_PLATFORM="Win32"
+    - cmr_CMAKE_GENERATOR_TOOLSET="v141_xp,host=x64"
+
+
+# === Android ===
+
+build_android: &build_android
+  stage: Test
+  os: linux
+  dist: xenial
+  addons:
+    apt:
+      packages:
+        - ninja-build
+
+  env: &build_android_env
+    - cmr_TARGET_OS=android
+    - cmr_JOBS="-j${cmr_JOBS_CNT}"
+
+    - cmr_CMAKE_RELEASE=cmake-3.6.0-Linux-x86_64
+    - cmr_CMAKE_DIR=${cmr_INSTALL_DIR}/${cmr_CMAKE_RELEASE}
+    - cmr_CMAKE_CMD=${cmr_CMAKE_DIR}/bin/cmake
+    - cmr_CTEST_CMD=${cmr_CMAKE_DIR}/bin/ctest
+
+    - cmr_CMAKE_GENERATOR="Ninja"
+    - cmr_CMAKE_BUILD_TYPE=Release
+
+    - cmr_ANDROID_NDK_VERSION=r19b
+    - cmr_ANDROID_NDK_NAME=android-ndk-${cmr_ANDROID_NDK_VERSION}
+    - cmr_ANDROID_NDK_PLATFORM=${cmr_ANDROID_NDK_NAME}-linux-x86_64
+    - cmr_ANDROID_NDK=${cmr_INSTALL_DIR}/${cmr_ANDROID_NDK_NAME}
+
+    - cmr_CMAKE_TOOLCHAIN_FILE=${cmr_ANDROID_NDK}/build/cmake/android.toolchain.cmake
+
+    - cmr_ANDROID_CPP_FEATURES="rtti exceptions"
+    - cmr_ANDROID_TOOLCHAIN=clang
+
+    - cmr_HOST_BUILD_DIR=${cmr_BUILD_DIR}/host_tools
+    - cmr_HOST_TOOLS_STAMP_FILE_NAME="host_tools_stamp"
+
+  before_install:
+    - cp -r ${cmr_SAMPLE_SRC_DIR} ${cmr_WORK_DIR}
+    - mkdir ${cmr_SAMPLE_LIB_DIR}
+    - cp -r ${cmr_REPO_DIR} ${cmr_SAMPLE_LIB_DIR}
+
+    - mkdir ${cmr_BUILD_DIR}
+    - mkdir ${cmr_HOST_BUILD_DIR}
+    - mkdir ${cmr_INSTALL_DIR}
+    - mkdir ${cmr_DOWNLOAD_DIR}
+
+    - wget -nv -c -N -P ${cmr_DOWNLOAD_DIR} https://cmake.org/files/v3.6/${cmr_CMAKE_RELEASE}.tar.gz
+    - tar -xf ${cmr_DOWNLOAD_DIR}/${cmr_CMAKE_RELEASE}.tar.gz --directory ${cmr_INSTALL_DIR}
+
+    - wget -nv -c -N -P ${cmr_DOWNLOAD_DIR} https://dl.google.com/android/repository/${cmr_ANDROID_NDK_PLATFORM}.zip
+    - unzip -q ${cmr_DOWNLOAD_DIR}/${cmr_ANDROID_NDK_PLATFORM}.zip -d ${cmr_INSTALL_DIR}
+
+    # NOTE: LibCMaker lib deps.
+    - git clone https://github.com/LibCMaker/LibCMaker.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker
+    - git clone https://github.com/LibCMaker/LibCMaker_GoogleTest.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker_GoogleTest
+    - git clone https://github.com/LibCMaker/LibCMaker_ICU.git ${cmr_SAMPLE_LIB_DIR}/LibCMaker_ICU
+
+  script:
+    # === Build host tools ===
+    - cd ${cmr_HOST_BUILD_DIR}
+
+    - ${cmr_CMAKE_CMD} ${cmr_HOST_TOOLS_PROJECT_DIR}
+        -Dcmr_BUILD_MULTIPROC_CNT=${cmr_JOBS_CNT}
+        -Dcmr_PRINT_DEBUG=ON
+        -DCMAKE_VERBOSE_MAKEFILE=ON
+        -DCMAKE_COLOR_MAKEFILE=ON
+        -DBUILD_TESTING=OFF
+        -DCMAKE_INSTALL_PREFIX=${cmr_INSTALL_DIR}
+        -Dcmr_DOWNLOAD_DIR=${cmr_DOWNLOAD_DIR}
+        -Dcmr_UNPACKED_DIR=${cmr_DOWNLOAD_DIR}/unpacked_host_tools
+          -DCMAKE_BUILD_TYPE=Release
+          -DBUILD_SHARED_LIBS=OFF
+        -DLibCMaker_LIB_DIR=${cmr_SAMPLE_LIB_DIR}
+          -DHOST_TOOLS_STAMP_FILE_NAME=${cmr_HOST_TOOLS_STAMP_FILE_NAME}
+        -DBOOST_WITHOUT_ICU=OFF
+          -DBOOST_DEBUG_SHOW_COMMANDS=ON
+          -DBOOST_DEBUG_CONFIGURATION=ON
+          -DBOOST_DEBUG_BUILDING=OFF
+          -DBOOST_DEBUG_GENERATOR=ON
+          -DBOOST_DEBUG_INSTALL=OFF
+
+    - ${cmr_CMAKE_CMD} --build . -- ${cmr_JOBS}
+
+    # === Build Android libs ===
+    - cd ${cmr_BUILD_DIR}
+
+    # NOTE: 'travis_wait 60' is needed because of Ninja waits b2 without any output.
+    - travis_wait 60 ${cmr_CMAKE_CMD} ${cmr_SAMPLE_DIR}
+        -Dcmr_BUILD_MULTIPROC_CNT=${cmr_JOBS_CNT}
+        -Dcmr_PRINT_DEBUG=ON
+        -DCMAKE_VERBOSE_MAKEFILE=ON
+        -DCMAKE_COLOR_MAKEFILE=ON
+        -DBUILD_TESTING=${cmr_BUILD_TESTING}
+        -DCMAKE_INSTALL_PREFIX=${cmr_INSTALL_DIR}
+        -Dcmr_DOWNLOAD_DIR=${cmr_DOWNLOAD_DIR}
+        -Dcmr_UNPACKED_DIR=${cmr_DOWNLOAD_DIR}/unpacked
+          -DCMAKE_BUILD_TYPE=${cmr_CMAKE_BUILD_TYPE}
+          -DBUILD_SHARED_LIBS=${cmr_BUILD_SHARED_LIBS}
+        -DANDROID_NDK=${cmr_ANDROID_NDK}
+          -DCMAKE_TOOLCHAIN_FILE=${cmr_CMAKE_TOOLCHAIN_FILE}
+          -DCMAKE_GENERATOR="${cmr_CMAKE_GENERATOR}"
+          -DANDROID_ABI=${cmr_ANDROID_ABI}
+          -DANDROID_NATIVE_API_LEVEL=${cmr_ANDROID_NATIVE_API_LEVEL}
+          -DANDROID_TOOLCHAIN=${cmr_ANDROID_TOOLCHAIN}
+          -DANDROID_STL=${cmr_ANDROID_STL}
+          -DANDROID_CPP_FEATURES="${cmr_ANDROID_CPP_FEATURES}"
+        -DBOOST_WITHOUT_ICU=OFF
+          -DBOOST_BUILD_ALL_COMPONENTS=ON
+          -DBOOST_REBUILD_OPTION=OFF
+          -DBOOST_DEBUG_SHOW_COMMANDS=ON
+          -DBOOST_DEBUG_CONFIGURATION=ON
+          -DBOOST_DEBUG_BUILDING=OFF
+          -DBOOST_DEBUG_GENERATOR=ON
+          -DBOOST_DEBUG_INSTALL=OFF
+        -Dcmr_HOST_BUILD_DIR=${cmr_HOST_BUILD_DIR}
+          -DICU_CROSS_COMPILING=ON
+
+    - ${cmr_CMAKE_CMD} --build . -- ${cmr_JOBS}
+
+#    - ${cmr_CTEST_CMD} --output-on-failure
+
+
+# === Build matrix ===
+
+jobs:
+  include:
+
+# Linux, gcc
+    - <<: *build_linux_gcc
+      name: "Linux, gcc, debug, shared"
+      env:
+        - *build_linux_env
+        - cmr_CMAKE_BUILD_TYPE=Debug
+        - cmr_BUILD_SHARED_LIBS=ON
+
+    - <<: *build_linux_gcc
+      name: "Linux, gcc, debug, static"
+      env:
+        - *build_linux_env
+        - cmr_CMAKE_BUILD_TYPE=Debug
+        - cmr_BUILD_SHARED_LIBS=OFF
+
+    - <<: *build_linux_gcc
+      name: "Linux, gcc, release, shared"
+      env:
+        - *build_linux_env
+        - cmr_CMAKE_BUILD_TYPE=Release
+        - cmr_BUILD_SHARED_LIBS=ON
+
+    - <<: *build_linux_gcc
+      name: "Linux, gcc, release, static"
+      env:
+        - *build_linux_env
+        - cmr_CMAKE_BUILD_TYPE=Release
+        - cmr_BUILD_SHARED_LIBS=OFF
+
+# Linux, clang
+    - <<: *build_linux_clang
+      name: "Linux, clang, debug, shared"
+      env:
+        - *build_linux_env
+        - cmr_CMAKE_BUILD_TYPE=Debug
+        - cmr_BUILD_SHARED_LIBS=ON
+
+    - <<: *build_linux_clang
+      name: "Linux, clang, debug, static"
+      env:
+        - *build_linux_env
+        - cmr_CMAKE_BUILD_TYPE=Debug
+        - cmr_BUILD_SHARED_LIBS=OFF
+
+    - <<: *build_linux_clang
+      name: "Linux, clang, release, shared"
+      env:
+        - *build_linux_env
+        - cmr_CMAKE_BUILD_TYPE=Release
+        - cmr_BUILD_SHARED_LIBS=ON
+
+    - <<: *build_linux_clang
+      name: "Linux, clang, release, static"
+      env:
+        - *build_linux_env
+        - cmr_CMAKE_BUILD_TYPE=Release
+        - cmr_BUILD_SHARED_LIBS=OFF
+
+# Windows, msvc
+    - <<: *build_windows_msvc_x64
+      name: "Windows, msvc, x64, shared"
+      if: branch = do_not_build_with_travis_ci
+      env:
+        - *build_windows_msvc_x64_env
+        - cmr_BUILD_SHARED_LIBS=ON
+        - cmr_WORKAROUND_CMD="cp ${cmr_INSTALL_DIR}/bin/*.dll ${cmr_BUILD_DIR}/test/${cmr_CMAKE_BUILD_TYPE}/"
+
+    - <<: *build_windows_msvc_x64
+      name: "Windows, msvc, x64, static"
+      if: branch = do_not_build_with_travis_ci
+      env:
+        - *build_windows_msvc_x64_env
+        - cmr_BUILD_SHARED_LIBS=OFF
+        - cmr_BOOST_WITHOUT_ICU=ON
+
+    - <<: *build_windows_msvc_x32
+      name: "Windows, msvc, x32, shared"
+      if: branch = do_not_build_with_travis_ci
+      env:
+        - *build_windows_msvc_x32_env
+        - cmr_BUILD_SHARED_LIBS=ON
+
+    - <<: *build_windows_msvc_x32
+      name: "Windows, msvc, x32, static"
+      if: branch = do_not_build_with_travis_ci
+      env:
+        - *build_windows_msvc_x32_env
+        - cmr_BUILD_SHARED_LIBS=OFF
+
+    - <<: *build_windows_msvc_winxp
+      name: "Windows, msvc, winxp, shared"
+      if: branch = do_not_build_with_travis_ci
+      env:
+        - *build_windows_msvc_winxp_env
+        - cmr_BUILD_SHARED_LIBS=ON
+
+    - <<: *build_windows_msvc_winxp
+      name: "Windows, msvc, winxp, static"
+      if: branch = do_not_build_with_travis_ci
+      env:
+        - *build_windows_msvc_winxp_env
+        - cmr_BUILD_SHARED_LIBS=OFF
+
+# Android, shared
+    - <<: *build_android
+      name: "Android, shared, armeabi-v7a"
+      env:
+        - *build_android_env
+        - cmr_BUILD_SHARED_LIBS=ON
+        - cmr_ANDROID_STL=c++_shared
+        - cmr_ANDROID_ABI=armeabi-v7a
+        - cmr_ANDROID_NATIVE_API_LEVEL=16
+
+    - <<: *build_android
+      name: "Android, shared, arm64-v8a"
+      env:
+        - *build_android_env
+        - cmr_BUILD_SHARED_LIBS=ON
+        - cmr_ANDROID_STL=c++_shared
+        - cmr_ANDROID_ABI=arm64-v8a
+        - cmr_ANDROID_NATIVE_API_LEVEL=21
+
+    - <<: *build_android
+      name: "Android, shared, x86"
+      env:
+        - *build_android_env
+        - cmr_BUILD_SHARED_LIBS=ON
+        - cmr_ANDROID_STL=c++_shared
+        - cmr_ANDROID_ABI=x86
+        - cmr_ANDROID_NATIVE_API_LEVEL=16
+
+    - <<: *build_android
+      name: "Android, shared, x86_64"
+      env:
+        - *build_android_env
+        - cmr_BUILD_SHARED_LIBS=ON
+        - cmr_ANDROID_STL=c++_shared
+        - cmr_ANDROID_ABI=x86_64
+        - cmr_ANDROID_NATIVE_API_LEVEL=21
+
+# Android, static
+    - <<: *build_android
+      name: "Android, static, armeabi-v7a"
+      env:
+        - *build_android_env
+        - cmr_BUILD_SHARED_LIBS=OFF
+        - cmr_ANDROID_STL=c++_static
+        - cmr_ANDROID_ABI=armeabi-v7a
+        - cmr_ANDROID_NATIVE_API_LEVEL=16
+
+    - <<: *build_android
+      name: "Android, static, arm64-v8a"
+      env:
+        - *build_android_env
+        - cmr_BUILD_SHARED_LIBS=OFF
+        - cmr_ANDROID_STL=c++_static
+        - cmr_ANDROID_ABI=arm64-v8a
+        - cmr_ANDROID_NATIVE_API_LEVEL=21
+
+    - <<: *build_android
+      name: "Android, static, x86"
+      env:
+        - *build_android_env
+        - cmr_BUILD_SHARED_LIBS=OFF
+        - cmr_ANDROID_STL=c++_static
+        - cmr_ANDROID_ABI=x86
+        - cmr_ANDROID_NATIVE_API_LEVEL=16
+
+    - <<: *build_android
+      name: "Android, static, x86_64"
+      env:
+        - *build_android_env
+        - cmr_BUILD_SHARED_LIBS=OFF
+        - cmr_ANDROID_STL=c++_static
+        - cmr_ANDROID_ABI=x86_64
+        - cmr_ANDROID_NATIVE_API_LEVEL=21
+
+
+notifications:
+  email:
+    recipients:
+      - nfeodonit@yandex.com
+    on_success: always
+    on_failure: always
