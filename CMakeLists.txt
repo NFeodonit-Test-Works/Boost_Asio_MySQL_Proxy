@@ -26,7 +26,7 @@ cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
 project(Boost_Asio_MySQL_Proxy CXX)
 
 # Used by LibCMaker_Boost for Boost building.
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 if(MSVC)
   set(CMAKE_CXX_STANDARD 14)
 endif()
@@ -122,7 +122,7 @@ set(bamp_EXE_NAME "boost-asio-mysql-proxy")
 
 add_executable(${bamp_EXE_NAME} "")
 set_target_properties(${bamp_EXE_NAME} PROPERTIES
-  CXX_STANDARD 11
+  CXX_STANDARD 17
 )
 
 target_compile_definitions(${bamp_EXE_NAME} PRIVATE
