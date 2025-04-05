@@ -29,7 +29,7 @@ set(BOOST_lib_NAME        "Boost")
 set(BOOST_lib_VERSION     "1.69.0")
 # TODO: Use the component autodetection from 'FindBoost.cmake'.
 set(BOOST_lib_COMPONENTS
-  regex coroutine context thread chrono system date_time atomic
+  system
 )
 #set(BOOST_lib_DIR         "${CMAKE_CURRENT_LIST_DIR}")
 

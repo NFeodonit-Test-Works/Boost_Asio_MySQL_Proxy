@@ -160,7 +160,5 @@ target_sources(${bamp_EXE_NAME} PRIVATE
 # About 'Boost::disable_autolinking' see 'FindBoost.cmake'.
 # TODO: Use the component autodetection from 'FindBoost.cmake'.
 target_link_libraries(${bamp_EXE_NAME} PRIVATE
-  Boost::disable_autolinking Boost::boost
-  Boost::regex Boost::coroutine Boost::context Boost::thread Boost::chrono
-  Boost::system Boost::date_time Boost::atomic
+  Boost::disable_autolinking Boost::boost Boost::system
 )
