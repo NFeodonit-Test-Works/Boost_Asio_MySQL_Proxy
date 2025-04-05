@@ -47,6 +47,7 @@ void ConnectionManager::stop_all()
     connecton->stop();
   }
   m_connections.clear();
+  std::cout << " All connections are closed.\n";
 }
 
 }  // namespace proxy
