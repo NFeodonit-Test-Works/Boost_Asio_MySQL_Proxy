@@ -52,7 +52,6 @@ public:
   MySqlCommand& operator=(const MySqlCommand&) = delete;
   MySqlCommand& operator=(MySqlCommand&&) = delete;
 
-  explicit MySqlCommand() = default;
   ~MySqlCommand() = default;
 
   // See https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_command_phase.html
